@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import EmojiPicker from 'emoji-picker-react';
 import Message from './Message';
+import { TbLogout2 } from "react-icons/tb";
 import './Chat.css';
 
 let socket;
 
-function Chat({ username, room }) {
+function Chat({ username, room, setIsJoined }) {
   const [currentMessage, setCurrentMessage] = useState('');
   const [messageList, setMessageList] = useState([]);
   const [users, setUsers] = useState([]);
@@ -152,7 +153,11 @@ function Chat({ username, room }) {
     <div className="chat-container">
       <div className="chat-sidebar">
         <div className="sidebar-header">
-          <h3>Room: {room}</h3>
+          <h3><TbLogout2 
+          color="red" onClick={()=>{
+           setIsJoined(false);
+            socket.disconnect();
+          }}/>  Room: {room}</h3>
         </div>
         <div className="users-section">
           <h4>Online Users ({users.length})</h4>

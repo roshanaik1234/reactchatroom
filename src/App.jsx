@@ -15,7 +15,7 @@ function App() {
   return (
     <div className="App">
       {isJoined ? (
-        <Chat username={user.username} room={user.room} />
+        <Chat username={user.username} room={user.room}  setIsJoined={setIsJoined}/>
       ) : (
         <Join onJoin={handleJoin} />
       )}
