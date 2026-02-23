@@ -105,6 +105,7 @@
   border-top: 1px solid #e0e0e0;
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 .message-input {
@@ -140,6 +141,38 @@
 
 .send-button:active {
   transform: translateY(0);
+}
+
+/* Emoji Picker */
+.emoji-picker-container {
+  position: relative;
+}
+
+.emoji-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 5px;
+  transition: background 0.2s;
+}
+
+.emoji-button:hover {
+  background: #f0f0f0;
+}
+
+.emoji-picker-wrapper {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 10px;
+  z-index: 1000;
+}
+
+.emoji-picker-wrapper .EmojiPicker {
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
 }
 
 /* Scrollbar styling */

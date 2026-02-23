@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
+import EmojiPicker from 'emoji-picker-react';
 import Message from './Message';
 import './Chat.css';
 
@@ -11,6 +12,8 @@ function Chat({ username, room }) {
   const [users, setUsers] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [messageReactions, setMessageReactions] = useState({});
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -46,11 +49,30 @@ function Chat({ username, room }) {
       });
     });
 
+    // Listen for reactions
+    socket.on('message_reaction', ({ messageIndex, emoji, reactor }) => {
+      setMessageReactions((prev) => {
+        const key = `${room}-${messageIndex}`;
+        const current = prev[key] || [];
+        const existing = current.find(r => r.emoji === emoji);
+        
+        if (existing) {
+          if (!existing.users.includes(reactor)) {
+            existing.users.push(reactor);
+          }
+        } else {
+          current.push({ emoji, users: [reactor] });
+        }
+        
+        return { ...prev, [key]: [...current] };
+      });
+    });
+
     // Cleanup on unmount
     return () => {
       socket.disconnect();
     };
-  }, [username, room]);
+  }, [username, room, SERVER_URL, room]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -95,12 +117,36 @@ function Chat({ username, room }) {
     }
   };
 
+  const onEmojiClick = (emojiObject) => {
+    setCurrentMessage((prev) => prev + emojiObject.emoji);
+  };
+
+  const addReaction = (messageIndex, emoji) => {
+    socket.emit('message_reaction', { 
+      room, 
+      messageIndex, 
+      emoji, 
+      reactor: username 
+    });
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   };
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showEmojiPicker && !event.target.closest('.emoji-picker-container')) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showEmojiPicker]);
 
   return (
     <div className="chat-container">
@@ -132,6 +178,8 @@ function Chat({ username, room }) {
               key={index}
               message={message}
               isOwnMessage={message.author === username}
+              reactions={messageReactions[`${room}-${index}`] || []}
+              onReaction={(emoji) => addReaction(index, emoji)}
             />
           ))}
           <div ref={messagesEndRef} />
@@ -144,6 +192,28 @@ function Chat({ username, room }) {
         )}
 
         <div className="chat-footer">
+          <div className="emoji-picker-container">
+            <button 
+              className="emoji-button" 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowEmojiPicker(!showEmojiPicker);
+              }}
+            >
+              😊
+            </button>
+            {showEmojiPicker && (
+              <div className="emoji-picker-wrapper" onClick={(e) => e.stopPropagation()}>
+                <EmojiPicker
+                  onEmojiClick={onEmojiClick}
+                  width={300}
+                  height={400}
+                  previewEmoji="😊"
+                  skinTonesDisabled
+                />
+              </div>
+            )}
+          </div>
           <input
             type="text"
             value={currentMessage}
